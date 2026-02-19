@@ -46,8 +46,7 @@ _mesa_unmarshal_GetActiveUniform(struct gl_context *ctx,
 static void
 wait_for_glLinkProgram(struct gl_context *ctx)
 {
-   /* Wait for the last glLinkProgram call. */
-   _mesa_glthread_wait_for_call(ctx, &ctx->GLThread.LastProgramChangeBatch);
+   (void)ctx;
 }
 
 void GLAPIENTRY

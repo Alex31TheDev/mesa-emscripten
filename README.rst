@@ -1,6 +1,24 @@
 `Mesa <https://mesa3d.org>`_ - The 3D Graphics Library
 ======================================================
 
+EMSCRIPTEN NOTES
+
+Original source: github.com/martinmullins/mesa-emscripten
+
+------
+
+.. code-block:: sh
+
+   $ bash rebuild-em.sh performance
+   # or:
+   $ bash rebuild-em.sh size
+
+.. code-block:: powershell
+
+   PS> ./rebuild-em.ps1 performance
+   # or:
+   PS> ./rebuild-em.ps1 size
+
 
 Source
 ------

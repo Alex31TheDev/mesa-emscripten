@@ -250,14 +250,6 @@ _mesa_glthread_init(struct gl_context *ctx)
 
    _mesa_glthread_enable(ctx);
 
-   /* Execute the thread initialization function in the thread. */
-   struct util_queue_fence fence;
-   util_queue_fence_init(&fence);
-   util_queue_add_job(&glthread->queue, ctx, &fence,
-                      glthread_thread_initialization, NULL, 0);
-   util_queue_fence_wait(&fence);
-   util_queue_fence_destroy(&fence);
-
    glthread->thread_sched_enabled = ctx->pipe->set_context_param &&
                                     util_thread_scheduler_enabled();
    util_thread_scheduler_init_state(&glthread->thread_sched_state);
@@ -404,11 +396,6 @@ _mesa_glthread_finish(struct gl_context *ctx)
    struct glthread_batch *last = &glthread->batches[glthread->last];
    struct glthread_batch *next = glthread->next_batch;
    bool synced = false;
-
-   if (!util_queue_fence_is_signalled(&last->fence)) {
-      util_queue_fence_wait(&last->fence);
-      synced = true;
-   }
 
    glthread_apply_thread_sched_policy(ctx, false);
 

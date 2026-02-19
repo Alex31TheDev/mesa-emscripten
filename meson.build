@@ -502,7 +502,7 @@ endif
 
 # -mtls-dialect=gnu2 speeds up non-initial-exec TLS significantly but requires
 # full toolchain (including libc) support.
-have_mtls_dialect = false
+have_mtls_dialect = true
 foreach c_arg : get_option('c_args')
   if c_arg.startswith('-mtls-dialect=')
     have_mtls_dialect = true
@@ -1080,7 +1080,6 @@ else
     '-Wmisleading-indentation',
     '-Wno-missing-field-initializers',
     '-Wno-format-truncation',
-    '-Wno-nonnull-compare',
     '-fno-math-errno',
     '-fno-trapping-math',
     '-Qunused-arguments',
@@ -1104,7 +1103,7 @@ else
     # gcc does aggressive dead-store elimination which threats all writes
     # to the memory before the constructor as "dead stores".
     # For now we disable this optimization.
-    '-flifetime-dse=1',
+    #'-flifetime-dse=1',
     '-Wno-unknown-pragmas',
     # Clang
     '-Wno-microsoft-enum-value',
@@ -1196,41 +1195,41 @@ sse2_arg = []
 sse2_args = []
 sse41_args = []
 with_sse41 = false
-if host_machine.cpu_family().startswith('x86')
-  pre_args += '-DUSE_SSE41'
-  with_sse41 = true
-
-  if cc.get_id() != 'msvc'
-    sse41_args = ['-msse4.1']
-
-    if host_machine.cpu_family() == 'x86'
-      # x86_64 have sse2 by default, so sse2 args only for x86
-      sse2_arg = ['-msse2', '-mfpmath=sse']
-      sse2_args = [sse2_arg, '-mstackrealign']
-      if get_option('sse2')
-        # These settings make generated GCC code match MSVC and follow
-        # GCC advice on https://gcc.gnu.org/wiki/FloatingPointMath#x86note
-        #
-        # NOTE: We need to ensure stack is realigned given that we
-        # produce shared objects, and have no control over the stack
-        # alignment policy of the application. Therefore we need
-        # -mstackrealign or -mincoming-stack-boundary=2.
-        #
-        # XXX: We could have SSE without -mstackrealign if we always used
-        # __attribute__((force_align_arg_pointer)), but that's not
-        # always the case.
-        c_cpp_args += sse2_args
-        # sse2_args are adopted into c_cpp_args to avoid duplicated sse2 command line args
-        sse2_arg = []
-        sse2_args = []
-      else
-        # GCC on x86 (not x86_64) with -msse* assumes a 16 byte aligned stack, but
-        # that's not guaranteed
-        sse41_args += '-mstackrealign'
-      endif
-    endif
-  endif
-endif
+#if host_machine.cpu_family().startswith('x86')
+#  pre_args += '-DUSE_SSE41'
+#  with_sse41 = true
+#
+#  if cc.get_id() != 'msvc'
+#    sse41_args = ['-msse4.1']
+#
+#    if host_machine.cpu_family() == 'x86'
+#      # x86_64 have sse2 by default, so sse2 args only for x86
+#      sse2_arg = ['-msse2', '-mfpmath=sse']
+#      sse2_args = [sse2_arg, '-mstackrealign']
+#      if get_option('sse2')
+#        # These settings make generated GCC code match MSVC and follow
+#        # GCC advice on https://gcc.gnu.org/wiki/FloatingPointMath#x86note
+#        #
+#        # NOTE: We need to ensure stack is realigned given that we
+#        # produce shared objects, and have no control over the stack
+#        # alignment policy of the application. Therefore we need
+#        # -mstackrealign or -mincoming-stack-boundary=2.
+#        #
+#        # XXX: We could have SSE without -mstackrealign if we always used
+#        # __attribute__((force_align_arg_pointer)), but that's not
+#        # always the case.
+#        c_cpp_args += sse2_args
+#        # sse2_args are adopted into c_cpp_args to avoid duplicated sse2 command line args
+#        sse2_arg = []
+#        sse2_args = []
+#      else
+#        # GCC on x86 (not x86_64) with -msse* assumes a 16 byte aligned stack, but
+#        # that's not guaranteed
+#        sse41_args += '-mstackrealign'
+#      endif
+#    endif
+#  endif
+#endif
 
 # Detect __builtin_ia32_clflushopt support
 if cc.has_function('__builtin_ia32_clflushopt', args : '-mclflushopt')
@@ -1290,51 +1289,52 @@ dep_ws2_32 = cc.find_library('ws2_32', required : with_platform_windows)
 # TODO: shared/static? Is this even worth doing?
 
 with_asm_arch = ''
-if host_machine.cpu_family() == 'x86'
-  if system_has_kms_drm or host_machine.system() == 'gnu'
-    with_asm_arch = 'x86'
-    pre_args += ['-DUSE_X86_ASM']
-
-    if with_glx_read_only_text
-      pre_args += ['-DGLX_X86_READONLY_TEXT']
-    endif
-  endif
-elif host_machine.cpu_family() == 'x86_64'
-  if system_has_kms_drm
-    with_asm_arch = 'x86_64'
-    pre_args += ['-DUSE_X86_64_ASM']
-  endif
-elif host_machine.cpu_family() == 'arm'
-  if system_has_kms_drm
-    with_asm_arch = 'arm'
-    pre_args += ['-DUSE_ARM_ASM']
-  endif
-elif host_machine.cpu_family() == 'aarch64'
-  if system_has_kms_drm
-    with_asm_arch = 'aarch64'
-    pre_args += ['-DUSE_AARCH64_ASM']
-  endif
-elif host_machine.cpu_family() == 'sparc64'
-  if system_has_kms_drm
-    with_asm_arch = 'sparc'
-    pre_args += ['-DUSE_SPARC_ASM']
-  endif
-elif host_machine.cpu_family() == 'ppc64' and host_machine.endian() == 'little'
-  if system_has_kms_drm
-    with_asm_arch = 'ppc64le'
-    pre_args += ['-DUSE_PPC64LE_ASM']
-  endif
-elif host_machine.cpu_family() == 'mips64' and host_machine.endian() == 'little'
-  if system_has_kms_drm
-    with_asm_arch = 'mips64el'
-    pre_args += ['-DUSE_MIPS64EL_ASM']
-  endif
-elif host_machine.cpu_family() == 'loongarch64'
-  if system_has_kms_drm
-    with_asm_arch = 'loongarch64'
-    pre_args += ['-DUSE_LOONGARCH64_ASM']
-  endif
-endif
+#if host_machine.cpu_family() == 'x86'
+#  if system_has_kms_drm or host_machine.system() == 'gnu'
+#    with_asm_arch = 'x86'
+#    pre_args += ['-DUSE_X86_ASM']
+#
+#    if with_glx_read_only_text
+#      pre_args += ['-DGLX_X86_READONLY_TEXT']
+#    endif
+#  endif
+#elif host_machine.cpu_family() == 'x86_64'
+#  if system_has_kms_drm
+#    with_asm_arch = 'x86_64'
+#    pre_args += ['-DUSE_X86_64_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'arm'
+#  if system_has_kms_drm
+#    with_asm_arch = 'arm'
+#    pre_args += ['-DUSE_ARM_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'aarch64'
+#  if system_has_kms_drm
+#    with_asm_arch = 'aarch64'
+#    pre_args += ['-DUSE_AARCH64_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'sparc64'
+#  if system_has_kms_drm
+#    with_asm_arch = 'sparc'
+#    pre_args += ['-DUSE_SPARC_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'ppc64' and host_machine.endian() == 'little'
+#  if system_has_kms_drm
+#    with_asm_arch = 'ppc64le'
+#    pre_args += ['-DUSE_PPC64LE_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'mips64' and host_machine.endian() == 'little'
+#  if system_has_kms_drm
+#    with_asm_arch = 'mips64el'
+#    pre_args += ['-DUSE_MIPS64EL_ASM']
+#  endif
+#elif host_machine.cpu_family() == 'loongarch64'
+#  if system_has_kms_drm
+#    with_asm_arch = 'loongarch64'
+#    pre_args += ['-DUSE_LOONGARCH64_ASM']
+#  endif
+#endif
+with_asm_arch = 'nodice'
 
 # Check for standard headers and functions
 if (cc.has_header_symbol('sys/sysmacros.h', 'major') and
@@ -1556,14 +1556,7 @@ elif with_shader_cache
   error('Shader Cache requires compression')
 endif
 
-if host_machine.system() == 'windows'
-  # For MSVC and MinGW we aren't using pthreads, and dependency('threads') will add linkage
-  # to pthread for MinGW, so leave the dependency null_dep for Windows. For Windows linking to
-  # kernel32 is enough for c11/threads.h and it's already linked by meson by default
-  dep_thread = null_dep
-else
-  dep_thread = dependency('threads')
-endif
+dep_thread = null_dep
 if dep_thread.found()
   pre_args += '-DHAVE_PTHREAD'
   if host_machine.system() != 'netbsd' and cc.has_function(
@@ -2228,7 +2221,7 @@ if dep_libdrm.found()
   gl_priv_reqs += 'libdrm >= 2.4.75'
 endif
 
-gl_priv_libs = []
+gl_priv_libs = ['-lpthread', '-pthread']
 if dep_thread.found()
   gl_priv_libs += ['-lpthread', '-pthread']
 endif

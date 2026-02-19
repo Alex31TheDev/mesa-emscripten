@@ -13966,10 +13966,8 @@ _mesa_glthread_execute_list(struct gl_context *ctx, GLuint list)
             }
             break;
          case OPCODE_DISABLE:
-            _mesa_glthread_Disable(ctx, n[1].e);
             break;
          case OPCODE_ENABLE:
-            _mesa_glthread_Enable(ctx, n[1].e);
             break;
          case OPCODE_LIST_BASE:
             _mesa_glthread_ListBase(ctx, n[1].ui);

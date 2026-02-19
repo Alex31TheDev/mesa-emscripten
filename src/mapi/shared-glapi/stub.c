@@ -50,8 +50,11 @@ struct mapi_stub {
 void
 stub_init_once(void)
 {
-   static once_flag flag = ONCE_FLAG_INIT;
-   call_once(&flag, entry_patch_public);
+   static int done = 0;
+   if (!done) {
+      done = 1;
+      entry_patch_public();
+   }
 }
 
 static int

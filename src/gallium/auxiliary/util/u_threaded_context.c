@@ -597,8 +597,6 @@ tc_batch_flush(struct threaded_context *tc, bool full_copy)
       tc_batch_increment_renderpass_info(tc, next_id, full_copy);
    }
 
-   util_queue_add_job(&tc->queue, next, &next->fence, tc_batch_execute,
-                      NULL, 0);
    tc->last = tc->next;
    tc->next = next_id;
    if (next_id == 0)
@@ -739,12 +737,6 @@ _tc_sync(struct threaded_context *tc, UNUSED const char *info, UNUSED const char
    }
    tc_signal_renderpass_info_ready(tc);
 
-   /* Only wait for queued calls... */
-   if (!util_queue_fence_is_signalled(&last->fence)) {
-      util_queue_fence_wait(&last->fence);
-      synced = true;
-   }
-
    tc_debug_check(tc);
 
    if (next->token) {
@@ -811,14 +803,7 @@ threaded_context_flush(struct pipe_context *_pipe,
    /* This is called from the gallium frontend / application thread. */
    if (token->tc && token->tc == tc) {
       struct tc_batch *last = &tc->batch_slots[tc->last];
-
-      /* Prefer to do the flush in the driver thread if it is already
-       * running. That should be better for cache locality.
-       */
-      if (prefer_async || !util_queue_fence_is_signalled(&last->fence))
-         tc_batch_flush(tc, false);
-      else
-         tc_sync(token->tc);
+      tc_sync(token->tc);
    }
 }
 
@@ -5134,16 +5119,6 @@ tc_destroy(struct pipe_context *_pipe)
 
    tc_sync(tc);
 
-   if (util_queue_is_initialized(&tc->queue)) {
-      util_queue_destroy(&tc->queue);
-
-      for (unsigned i = 0; i < TC_MAX_BATCHES; i++) {
-         util_queue_fence_destroy(&tc->batch_slots[i].fence);
-         util_dynarray_fini(&tc->batch_slots[i].renderpass_infos);
-         assert(!tc->batch_slots[i].token);
-      }
-   }
-
    slab_destroy_child(&tc->pool_transfers);
    assert(tc->batch_slots[tc->next].num_total_slots == 0);
    pipe->destroy(pipe);
@@ -5247,8 +5222,6 @@ threaded_context_create(struct pipe_context *pipe,
     * from the queue before being executed, so keep one tc_batch slot for that
     * execution. Also, keep one unused slot for an unflushed batch.
     */
-   if (!util_queue_init(&tc->queue, "gdrv", TC_MAX_BATCHES - 2, 1, 0, NULL))
-      goto fail;
 
    tc->last_completed = -1;
    for (unsigned i = 0; i < TC_MAX_BATCHES; i++) {
@@ -5257,7 +5230,6 @@ threaded_context_create(struct pipe_context *pipe,
 #endif
       tc->batch_slots[i].tc = tc;
       tc->batch_slots[i].batch_idx = i;
-      util_queue_fence_init(&tc->batch_slots[i].fence);
       tc->batch_slots[i].renderpass_info_idx = -1;
       if (tc->options.parse_renderpass_info) {
          util_dynarray_init(&tc->batch_slots[i].renderpass_infos, NULL);

@@ -59,7 +59,6 @@
 #include "GL/osmesa.h"
 
 #include <stdio.h>
-#include <c11/threads.h>
 
 #include "state_tracker/st_context.h"
 
@@ -172,9 +171,11 @@ create_st_manager(void)
 static struct pipe_frontend_screen *
 get_st_manager(void)
 {
-   static once_flag create_once_flag = ONCE_FLAG_INIT;
-
-   call_once(&create_once_flag, create_st_manager);
+   static int done = 0;
+   if (!done) {
+      done = 1;
+      create_st_manager();
+   }
 
    return global_fscreen;
 }

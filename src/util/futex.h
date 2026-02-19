@@ -24,6 +24,8 @@
 #ifndef UTIL_FUTEX_H
 #define UTIL_FUTEX_H
 
+#undef HAVE_LINUX_FUTEX_H
+
 #if THREAD_SANITIZER
 #define UTIL_FUTEX_SUPPORTED 0
 #else

@@ -133,8 +133,6 @@ files_mesa_util = files(
   'u_hash_table.c',
   'u_hash_table.h',
   'u_pointer.h',
-  'u_queue.c',
-  'u_queue.h',
   'u_string.h',
   'u_thread.c',
   'u_thread.h',
@@ -167,6 +165,13 @@ files_mesa_util = files(
   'mesa_cache_db_multipart.c',
   'mesa_cache_db_multipart.h',
 )
+
+if dep_thread.found()
+  files_mesa_util += files(
+    'u_queue.c',
+    'u_queue.h',
+  )
+endif
 
 files_drirc = files('00-mesa-defaults.conf')
 

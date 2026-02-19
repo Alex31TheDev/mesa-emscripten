@@ -4,50 +4,75 @@
 osmesa_link_with = []
 osmesa_link_args = []
 osmesa_link_deps = []
+osmesa_static = get_option('default_library') == 'static'
+osmesa_sources = [
+  'osmesa_target.c',
+  'emscripten/osmesa_link_stubs.c',
+]
 
 if with_shared_glapi
   osmesa_link_with += libglapi
 endif
-if with_ld_version_script
+if with_ld_version_script and not osmesa_static
   osmesa_link_args += [
     '-Wl,--version-script', join_paths(meson.current_source_dir(), 'osmesa.sym')
   ]
   osmesa_link_deps += files('osmesa.sym')
 endif
 
-osmesa_def = custom_target(
-  'osmesa.def',
-  input: 'osmesa.def.in',
-  output : 'osmesa.def',
-  command : gen_vs_module_defs_normal_command,
-)
+if osmesa_static
+  libosmesa = static_library(
+    osmesa_lib_name,
+    osmesa_sources,
+    gnu_symbol_visibility : 'hidden',
+    include_directories : [
+      inc_include, inc_src, inc_gallium, inc_gallium_aux, inc_gallium_winsys,
+      inc_gallium_drivers,
+    ],
+    link_whole : [libosmesa_st, libglapi_static],
+    link_with : [
+      libmesa, libgallium, libws_null, osmesa_link_with,
+    ],
+    dependencies : [
+      dep_ws2_32, dep_thread, dep_clock, dep_unwind, driver_swrast, idep_mesautil,
+    ],
+    install : true,
+  )
+else
+  osmesa_def = custom_target(
+    'osmesa.def',
+    input: 'osmesa.def.in',
+    output : 'osmesa.def',
+    command : gen_vs_module_defs_normal_command,
+  )
 
-libosmesa = shared_library(
-  osmesa_lib_name,
-  'osmesa_target.c',
-  gnu_symbol_visibility : 'hidden',
-  link_args : [ld_args_gc_sections, osmesa_link_args],
-  vs_module_defs : osmesa_def,
-  include_directories : [
-    inc_include, inc_src, inc_gallium, inc_gallium_aux, inc_gallium_winsys,
-    inc_gallium_drivers,
-  ],
-  link_depends : osmesa_link_deps,
-  link_whole : [libosmesa_st, libglapi_static],
-  link_with : [
-    libmesa, libgallium, libws_null, osmesa_link_with,
-  ],
-  dependencies : [
-    dep_ws2_32, dep_thread, dep_clock, dep_unwind, driver_swrast, idep_mesautil,
-  ],
-  name_prefix : host_machine.system() == 'windows' ? '' : [],  # otherwise mingw will create libosmesa.dll
-  soversion : host_machine.system() == 'windows' ? '' : '8',
-  version : '8.0.0',
-  darwin_versions : '9.0.0',
-  install : true,
-)
+  libosmesa = shared_library(
+    osmesa_lib_name,
+    osmesa_sources,
+    gnu_symbol_visibility : 'hidden',
+    link_args : [ld_args_gc_sections, osmesa_link_args],
+    vs_module_defs : osmesa_def,
+    include_directories : [
+      inc_include, inc_src, inc_gallium, inc_gallium_aux, inc_gallium_winsys,
+      inc_gallium_drivers,
+    ],
+    link_depends : osmesa_link_deps,
+    link_whole : [libosmesa_st, libglapi_static],
+    link_with : [
+      libmesa, libgallium, libws_null, osmesa_link_with,
+    ],
+    dependencies : [
+      dep_ws2_32, dep_thread, dep_clock, dep_unwind, driver_swrast, idep_mesautil,
+    ],
+    name_prefix : host_machine.system() == 'windows' ? '' : [],  # otherwise mingw will create libosmesa.dll
+    soversion : host_machine.system() == 'windows' ? '' : '8',
+    version : '8.0.0',
+    darwin_versions : '9.0.0',
+    install : true,
+  )
+endif
 
-if with_symbols_check
+if with_symbols_check and not osmesa_static
   test('osmesa-symbols-check',
     symbols_check,
     args : [

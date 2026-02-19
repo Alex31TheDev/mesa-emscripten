@@ -28,10 +28,6 @@
 #ifndef RWLOCK_H
 #define RWLOCK_H
 
-#if defined(HAVE_PTHREAD)
-#include <pthread.h>
-#endif
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,8 +38,10 @@ struct u_rwlock
    struct {
       void *Ptr;
    } rwlock;
-#else
+#elif defined(_POSIX_READER_WRITER_LOCKS) && (_POSIX_READER_WRITER_LOCKS > 0)
    pthread_rwlock_t rwlock;
+#else
+   pthread_mutex_t rwlock;
 #endif
 };
 

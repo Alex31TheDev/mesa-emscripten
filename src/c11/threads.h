@@ -44,7 +44,9 @@
 #  include <pthread.h>
 #  include <unistd.h> /* close, _exit */
 #else
-#  error Not supported on this platform.
+#  define C11_FORCE_PTHREAD 1
+#  include <pthread.h>
+#  include <unistd.h> /* close, _exit */
 #endif
 
 #if defined(HAVE_THRD_CREATE)
@@ -113,7 +115,7 @@ typedef struct
 } once_flag;
 #  define ONCE_FLAG_INIT {0}
 #  define TSS_DTOR_ITERATIONS 1
-#elif defined(HAVE_PTHREAD)
+#elif defined(HAVE_PTHREAD) || defined(C11_FORCE_PTHREAD)
 typedef pthread_cond_t  cnd_t;
 typedef pthread_t       thrd_t;
 typedef pthread_key_t   tss_t;

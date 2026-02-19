@@ -37,6 +37,7 @@
  */
 
 #include "util/glheader.h"
+#include <stdio.h>
 #include "main/context.h"
 #include "main/shaderapi.h"
 #include "main/shaderobj.h"
@@ -1018,8 +1019,7 @@ _mesa_GetUniformLocation_impl(GLuint programObj, const GLcharARB *name,
     *     INVALID_OPERATION is generated."
     */
    if (shProg->data->LinkStatus == LINKING_FAILURE) {
-      _mesa_error_glthread_safe(ctx, GL_INVALID_OPERATION, glthread,
-                                "glGetUniformLocation(program not linked)");
+      fprintf(stderr, "glGetUniformLocation(program not linked)");
       return -1;
    }
 

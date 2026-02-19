@@ -37,15 +37,7 @@
 int
 util_get_current_cpu(void)
 {
-#if DETECT_OS_LINUX && !DETECT_OS_ANDROID
-   return sched_getcpu();
-
-#elif defined(_WIN32) && !defined(HAVE_PTHREAD)
-   return GetCurrentProcessorNumber();
-
-#else
    return -1;
-#endif
 }
 
 int u_thread_create(thrd_t *thrd, int (*routine)(void *), void *param)
@@ -74,28 +66,6 @@ int u_thread_create(thrd_t *thrd, int (*routine)(void *), void *param)
 
 void u_thread_setname( const char *name )
 {
-#if defined(HAVE_PTHREAD)
-#if DETECT_OS_LINUX || DETECT_OS_CYGWIN || DETECT_OS_SOLARIS || defined(__GLIBC__) || DETECT_OS_MANAGARM || DETECT_OS_FUCHSIA
-   int ret = pthread_setname_np(pthread_self(), name);
-   if (ret == ERANGE) {
-      char buf[16];
-      const size_t len = MIN2(strlen(name), ARRAY_SIZE(buf) - 1);
-      memcpy(buf, name, len);
-      buf[len] = '\0';
-      pthread_setname_np(pthread_self(), buf);
-   }
-#elif DETECT_OS_FREEBSD || DETECT_OS_OPENBSD
-   pthread_set_name_np(pthread_self(), name);
-#elif DETECT_OS_NETBSD
-   pthread_setname_np(pthread_self(), "%s", (void *)name);
-#elif DETECT_OS_APPLE
-   pthread_setname_np(name);
-#elif DETECT_OS_HAIKU
-   rename_thread(find_thread(NULL), name);
-#else
-#warning Not sure how to call pthread_setname_np
-#endif
-#endif
    (void)name;
 }
 

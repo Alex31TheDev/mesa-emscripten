@@ -244,9 +244,11 @@ one_time_init(const char *extensions_override)
 void
 _mesa_initialize(const char *extensions_override)
 {
-   static util_once_flag once = UTIL_ONCE_FLAG_INIT;
-   util_call_once_data(&once,
-      (util_call_once_data_func)one_time_init, extensions_override);
+   static int done = 0;
+   if (!done) {
+      done = 1;
+      one_time_init(extensions_override);
+   }
 }
 
 

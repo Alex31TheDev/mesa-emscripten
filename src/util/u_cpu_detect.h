@@ -179,8 +179,13 @@ util_get_cpu_caps(void)
     * sure, but that state is such that it appears to return exactly the same
     * value with the same internal data every time.
     */
-   if (unlikely(!p_atomic_read(&_util_cpu_caps_state.detect_done)))
-      call_once(&_util_cpu_caps_state.once_flag, _util_cpu_detect_once);
+   if (unlikely(!p_atomic_read(&_util_cpu_caps_state.detect_done))) {
+      static int done = 0;
+      if (!done) {
+         done = 1;
+         _util_cpu_detect_once();
+      }
+   }
 
    return &_util_cpu_caps_state.caps;
 }

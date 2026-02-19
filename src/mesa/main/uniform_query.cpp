@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <inttypes.h>  /* for PRIx64 macro */
 #include <math.h>
+#include <stdio.h>
 
 #include "main/context.h"
 #include "main/draw_validate.h"
@@ -59,8 +60,7 @@ _mesa_GetActiveUniform_impl(GLuint program, GLuint index,
    struct gl_program_resource *res;
 
    if (maxLength < 0) {
-      _mesa_error_glthread_safe(ctx, GL_INVALID_VALUE, glthread,
-                                "glGetActiveUniform(maxLength < 0)");
+      fprintf(stderr, "glGetActiveUniform(maxLength < 0)");
       return;
    }
 
@@ -73,8 +73,7 @@ _mesa_GetActiveUniform_impl(GLuint program, GLuint index,
                                            GL_UNIFORM, index);
 
    if (!res) {
-      _mesa_error_glthread_safe(ctx, GL_INVALID_VALUE, glthread,
-                                "glGetActiveUniform(index)");
+      fprintf(stderr, "glGetActiveUniform(index)");
       return;
    }
 

@@ -32,6 +32,8 @@
  * @author Jose Fonseca <jfonseca@vmware.com>
  */
 
+#undef HAVE_EXECINFO_H
+
 #include "util/compiler.h"
 #include "util/u_thread.h"
 #include "util/simple_mtx.h"

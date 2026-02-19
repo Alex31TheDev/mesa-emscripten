@@ -194,18 +194,6 @@ os_read_file(const char *filename, size_t *size)
    return buf;
 }
 
-#if (DETECT_OS_LINUX || DETECT_OS_FREEBSD) && ALLOW_KCMP
-
-#include <sys/syscall.h>
-#include <unistd.h>
-
-#if DETECT_OS_LINUX
-/* copied from <linux/kcmp.h> */
-#define KCMP_FILE 0
-#endif
-
-#endif
-
 #if DETECT_OS_DRAGONFLY || DETECT_OS_FREEBSD
 
 #include "macros.h" /* ARRAY_SIZE */
@@ -227,17 +215,11 @@ typedef void *kvaddr_t;
 int
 os_same_file_description(int fd1, int fd2)
 {
-#ifdef SYS_kcmp
-   pid_t pid = getpid();
-#endif
-
    /* Same file descriptor trivially implies same file description */
    if (fd1 == fd2)
       return 0;
 
-#ifdef SYS_kcmp
-   return syscall(SYS_kcmp, pid, pid, KCMP_FILE, fd1, fd2);
-#elif DETECT_OS_DRAGONFLY || DETECT_OS_FREEBSD
+#if DETECT_OS_DRAGONFLY || DETECT_OS_FREEBSD
    int mib[] = { CTL_KERN, KERN_FILE };
    size_t len;
    if (sysctl(mib, ARRAY_SIZE(mib), NULL, &len, NULL, 0))

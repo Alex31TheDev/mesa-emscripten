@@ -785,12 +785,6 @@ _mesa_glthread_CallList(struct gl_context *ctx, GLuint list)
    if (ctx->GLThread.ListMode == GL_COMPILE)
       return;
 
-   /* Wait for all glEndList and glDeleteLists calls to finish to ensure that
-    * all display lists are up to date and the driver thread is not
-    * modifiying them. We will be executing them in the application thread.
-    */
-   _mesa_glthread_wait_for_call(ctx, &ctx->GLThread.LastDListChangeBatchIndex);
-
    if (!ctx->Shared->DisplayListsAffectGLThread)
       return;
 
@@ -812,12 +806,6 @@ _mesa_glthread_CallLists(struct gl_context *ctx, GLsizei n, GLenum type,
 
    if (n <= 0 || !lists)
       return;
-
-   /* Wait for all glEndList and glDeleteLists calls to finish to ensure that
-    * all display lists are up to date and the driver thread is not
-    * modifiying them. We will be executing them in the application thread.
-    */
-   _mesa_glthread_wait_for_call(ctx, &ctx->GLThread.LastDListChangeBatchIndex);
 
    /* Clear GL_COMPILE_AND_EXECUTE if needed. We only execute here. */
    unsigned saved_mode = ctx->GLThread.ListMode;

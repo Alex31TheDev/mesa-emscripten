@@ -37,6 +37,7 @@
 #include "compiler/glsl/ir.h"
 #include "compiler/glsl/linker_util.h"
 #include "compiler/glsl/string_to_uint_map.h"
+#include <stdio.h>
 #include "c99_alloca.h"
 #include "api_exec_decl.h"
 
@@ -1071,14 +1072,12 @@ _mesa_get_program_resource_name(struct gl_shader_program *shProg,
    * <programInterface>.
    */
    if (!res) {
-      _mesa_error_glthread_safe(ctx, GL_INVALID_VALUE, glthread,
-                                "%s(index %u)", caller, index);
+      fprintf(stderr, "%s(index %u)", caller, index);
       return false;
    }
 
    if (bufSize < 0) {
-      _mesa_error_glthread_safe(ctx, GL_INVALID_VALUE, glthread,
-                                "%s(bufSize %d)", caller, bufSize);
+      fprintf(stderr, "%s(bufSize %d)", caller, bufSize);
       return false;
    }
 
@@ -1428,10 +1427,9 @@ get_buffer_property(struct gl_shader_program *shProg,
    assert(!"support for property type not implemented");
 
 invalid_operation:
-   _mesa_error_glthread_safe(ctx, GL_INVALID_OPERATION, glthread,
-                             "%s(%s prop %s)", caller,
-                             _mesa_enum_to_string(res->Type),
-                             _mesa_enum_to_string(prop));
+   fprintf(stderr, "%s(%s prop %s)", caller,
+           _mesa_enum_to_string(res->Type),
+           _mesa_enum_to_string(prop));
 
    return 0;
 }
@@ -1685,17 +1683,15 @@ _mesa_program_resource_prop(struct gl_shader_program *shProg,
 #undef VALIDATE_TYPE_2
 
 invalid_enum:
-   _mesa_error_glthread_safe(ctx, GL_INVALID_ENUM, glthread,
-                             "%s(%s prop %s)", caller,
-                             _mesa_enum_to_string(res->Type),
-                             _mesa_enum_to_string(prop));
+   fprintf(stderr, "%s(%s prop %s)", caller,
+           _mesa_enum_to_string(res->Type),
+           _mesa_enum_to_string(prop));
    return 0;
 
 invalid_operation:
-   _mesa_error_glthread_safe(ctx, GL_INVALID_OPERATION, glthread,
-                             "%s(%s prop %s)", caller,
-                             _mesa_enum_to_string(res->Type),
-                             _mesa_enum_to_string(prop));
+   fprintf(stderr, "%s(%s prop %s)", caller,
+           _mesa_enum_to_string(res->Type),
+           _mesa_enum_to_string(prop));
    return 0;
 }
 
